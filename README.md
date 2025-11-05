@@ -9,6 +9,7 @@ Instead of building a model from scratch, it uses **transfer learning** with pre
 
 ## 📊 Dataset
 **Dataset:** [TrashNet](https://www.kaggle.com/code/lutfianaorinnijhum/trashnet-cnn/notebook)  
+**Dataset:** [TrashNet V2](https://www.kaggle.com/code/akhileshs111111/trashnet-v2/input)  
 - Contains 6 waste categories: *plastic, paper, metal, glass, cardboard, trash*  
 - Used to train a model that outputs either:
   - 6-class waste type classification, or  
