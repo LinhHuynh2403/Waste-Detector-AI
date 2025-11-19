@@ -109,22 +109,23 @@ def train_model(num_epochs, train_loader, val_loader, model, criterion, optimize
     return train_loss, val_loss, train_accuracy, val_accuracy
 
 # Function to save metrics as JSON 
-def save_metrics_json(train_loss, val_loss, train_accuracy, val_accuracy, num_epochs, filepath): # Path argument added
+def save_metrics_json(train_loss, val_loss, train_accuracy, val_accuracy, num_epochs, lr, filepath): # Path argument added
     metrics = {
         'num_epochs': num_epochs,
         'train_loss': train_loss,
         'val_loss': val_loss,
         'train_accuracy': train_accuracy,
-        'val_accuracy': val_accuracy
+        'val_accuracy': val_accuracy,
+        'learning_rate': lr
     }
     with open(filepath, 'w') as f:
         json.dump(metrics, f)
     print(f"Training metrics saved to {filepath}")
 
 # Function to save metrics as CSV 
-def save_metrics_csv(train_loss, val_loss, train_accuracy, val_accuracy, filepath): # Path argument added
+def save_metrics_csv(train_loss, val_loss, train_accuracy, val_accuracy, lr, filepath): # Path argument added
     
-    header = ['Epoch', 'Train_Loss', 'Val_Loss', 'Train_Accuracy', 'Val_Accuracy']
+    header = ['Epoch', 'Learning_Rate', 'Train_Loss', 'Val_Loss', 'Train_Accuracy', 'Val_Accuracy']
     data = []
     for i in range(len(train_loss)):
         data.append([
@@ -132,7 +133,8 @@ def save_metrics_csv(train_loss, val_loss, train_accuracy, val_accuracy, filepat
             train_loss[i],
             val_loss[i],
             train_accuracy[i],
-            val_accuracy[i]
+            val_accuracy[i],
+            lr
         ])
 
     with open(filepath, 'w', newline='') as f:
