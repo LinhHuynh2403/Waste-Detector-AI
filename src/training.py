@@ -157,43 +157,52 @@ if __name__ == "__main__":
     RESULTS_FOLDER = 'results'  
     
     parser = argparse.ArgumentParser(description='Train a garbage classification model.')
-    parser.add_argument('--epochs', type=int, default=10, help='Number of training epochs. (Default: 10)')
-    parser.add_argument('--lr', type=float, default=0.001, help='Learning rate for the optimizer. (Default: 0.001)')
+    parser.add_argument('--epochs', type=int, nargs='+', default=[10], help='Number of training epochs. (Default: 10)')
+    parser.add_argument('--lr', type=float, nargs='+', default=[0.001], help='Learning rate for the optimizer. (Default: 0.001)')
     args = parser.parse_args()
 
-    # Load the data
+    # Load the data once
     train_loader, val_loader, classes = load_data()
     num_classes = len(classes)
-
-    # Build the model
-    model, device = build_model(num_classes)
-
-    # Define the loss function and optimizer
-    criterion, optimizer = define_optimizer(model, args.lr)
     
-    # Train the model
-    train_loss, val_loss, train_accuracy, val_accuracy = train_model(
-        args.epochs, train_loader, val_loader, model, criterion, optimizer, device
-    )
-
-    # --- Save all files to the results folder ---
-    
-    # Define file paths using os.path.join for cross-platform compatibility
-    model_path = os.path.join(RESULTS_FOLDER, 'trash_sorting_finetuned_model.pth')
+    # Save class names once
     class_names_path = os.path.join(RESULTS_FOLDER, 'class_names.json')
-    metrics_json_path = os.path.join(RESULTS_FOLDER, 'training_metrics.json')
-    metrics_csv_path = os.path.join(RESULTS_FOLDER, 'training_metrics.csv')
-
-
-    # Save the metrics to JSON 
-    save_metrics_json(train_loss, val_loss, train_accuracy, val_accuracy, args.epochs, metrics_json_path)
-    
-    # Save the metrics to CSV 
-    save_metrics_csv(train_loss, val_loss, train_accuracy, val_accuracy, metrics_csv_path)
-
-    # Save the trained model
-    torch.save(model.state_dict(), model_path)
-    print(f"Model saved to {model_path}")
-    
-    # Save the class names
     save_class_names(classes, class_names_path)
+
+    run_id = 0
+    
+    # NESTED LOOPS for Grid Search
+    for num_epochs in args.epochs:
+        for lr in args.lr:
+            run_id += 1
+            
+            print("\n" + "="*50)
+            print(f"STARTING RUN {run_id}: Epochs={num_epochs}, LR={lr}")
+            print("="*50)
+
+            # --- Unique File Naming ---
+            suffix = f"e{num_epochs}_lr{lr:.6f}".replace('.', '')
+            
+            # Paths use the unique suffix to prevent overwriting
+            model_path = os.path.join(RESULTS_FOLDER, f'model_{suffix}.pth')
+            metrics_json_path = os.path.join(RESULTS_FOLDER, f'metrics_{suffix}.json')
+            metrics_csv_path = os.path.join(RESULTS_FOLDER, f'metrics_{suffix}.csv')
+            
+            # 1. Build the model (Re-initialize weights for each run)
+            model, device = build_model(num_classes)
+
+            # 2. Define the loss function and optimizer
+            criterion, optimizer = define_optimizer(model, lr)
+            
+            # 3. Train the model
+            train_loss, val_loss, train_accuracy, val_accuracy = train_model(
+                num_epochs, train_loader, val_loader, model, criterion, optimizer, device
+            )
+
+            # 4. Save results
+            save_metrics_json(train_loss, val_loss, train_accuracy, val_accuracy, num_epochs, metrics_json_path)
+            save_metrics_csv(train_loss, val_loss, train_accuracy, val_accuracy, lr, metrics_csv_path)
+            torch.save(model.state_dict(), model_path)
+            print(f"Model saved to {model_path}")
+            
+    print("\nHyperparameter sweep complete!")
