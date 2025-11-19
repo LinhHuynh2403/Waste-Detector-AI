@@ -68,7 +68,7 @@ cd trash-sorting-ai
 
 for Mac/Linux
 ```bash
-python -m venv vevn
+python -m venv venv
 source venv/bin/activate   
 ``` 
 
