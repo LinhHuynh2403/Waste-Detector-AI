@@ -88,3 +88,7 @@ pip install -r requirements.txt
 python src/train.py     # for training
 python src/predict.py   # for testing new images
 ```
+5. **Run the plot**
+```bash
+python src/plot_metric.py --file results/metrics_e20_lr000100.json # for instance
+```
