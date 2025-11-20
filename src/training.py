@@ -123,29 +123,31 @@ def save_metrics_json(train_loss, val_loss, train_accuracy, val_accuracy, num_ep
     print(f"Training metrics saved to {filepath}")
 
 # Function to save metrics as CSV 
-def save_metrics_csv(train_loss, val_loss, train_accuracy, val_accuracy, lr, filepath): 
+def save_metrics_csv(num_epochs, lr, final_train_loss, final_val_loss, final_train_accuracy, final_val_accuracy, filepath):
     
-    # 1. Prepare the header
     header = ['Epoch', 'Learning_Rate', 'Train_Loss', 'Val_Loss', 'Train_Accuracy', 'Val_Accuracy']
-    data = []
+    data_row = [
+        num_epochs,
+        lr,
+        f"{final_train_loss:.4f}",
+        f"{final_val_loss:.4f}",
+        f"{final_train_accuracy * 100:.2f}",
+        f"{final_val_accuracy * 100:.2f}"
+    ]
     
-    # 2. Prepare the data rows
-    for i in range(len(train_loss)):
-        data.append([
-            i + 1,
-            lr, 
-            train_loss[i],
-            val_loss[i],
-            train_accuracy[i],
-            val_accuracy[i]
-        ])
-
-    with open(filepath, 'w', newline='') as f:
+    # Check if file exists to decide whether to write header
+    write_header = not os.path.exists(filepath)
+    
+    # Open file in append mode ('a')
+    with open(filepath, 'a', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(header)
-        writer.writerows(data)
         
-    print(f"Training metrics saved to {filepath}")
+        if write_header:
+            writer.writerow(header) # Write header only if file is new
+        
+        writer.writerow(data_row)
+        
+    print(f"Final summary metrics appended to CSV: {filepath}")
 
 # Function to save class names 
 def save_class_names(classes, filepath):
@@ -155,18 +157,19 @@ def save_class_names(classes, filepath):
 
 # ---- Main function (Modified) ----
 if __name__ == "__main__":
+    RESULTS_FOLDER = 'results'
+    SUMMARY_CSV_PATH = os.path.join(RESULTS_FOLDER, 'training_metrics.csv')
     
-    # Define the results folder name
-    RESULTS_FOLDER = 'results'  
+    # Clear the summary file at the start of a fresh sweep
+    if os.path.exists(SUMMARY_CSV_PATH):
+        os.remove(SUMMARY_CSV_PATH)
+        print(f"Removed existing summary file: {SUMMARY_CSV_PATH} to start fresh sweep.")
     
     parser = argparse.ArgumentParser(description='Train a garbage classification model.')
     parser.add_argument('--epochs', type=int, nargs='+', default=[10], help='List of epoch counts to test. (Default: 10)')
     parser.add_argument('--lr', type=float, nargs='+', default=[0.001], help='List of learning rates to test. (Default: 0.001)')
     args = parser.parse_args()
 
-    # Create results folder
-    os.makedirs(RESULTS_FOLDER, exist_ok=True)
-    
     # Load the data once
     train_loader, val_loader, classes = load_data()
     num_classes = len(classes)
@@ -186,13 +189,10 @@ if __name__ == "__main__":
             print(f"STARTING RUN {run_id}: Epochs={num_epochs}, LR={lr}")
             print("="*50)
 
-            # --- Unique File Naming ---
+            # --- Unique File Naming for Model and Plotting JSON ---
             suffix = f"e{num_epochs}_lr{lr:.6f}".replace('.', '')
-            
-            # Paths use the unique suffix to prevent overwriting
             model_path = os.path.join(RESULTS_FOLDER, f'model_{suffix}.pth')
-            metrics_json_path = os.path.join(RESULTS_FOLDER, f'metrics_{suffix}.json')
-            metrics_csv_path = os.path.join(RESULTS_FOLDER, f'metrics_{suffix}.csv')
+            metrics_json_path = os.path.join(RESULTS_FOLDER, f'metrics_{suffix}.json') # For plotting script
             
             # 1. Build the model (Re-initialize weights for each run)
             model, device = build_model(num_classes)
@@ -205,11 +205,29 @@ if __name__ == "__main__":
                 num_epochs, train_loader, val_loader, model, criterion, optimizer, device
             )
 
-            # 4. Save results
-            # FIX APPLIED: Pass 'lr' argument
+            # 4. Extract Final Metrics
+            final_train_loss = train_loss[-1]
+            final_val_loss = val_loss[-1]
+            final_train_accuracy = train_accuracy[-1]
+            final_val_accuracy = val_accuracy[-1]
+
+            # 5. Save per-epoch JSON (for plotting)
             save_metrics_json(train_loss, val_loss, train_accuracy, val_accuracy, num_epochs, lr, metrics_json_path)
-            save_metrics_csv(train_loss, val_loss, train_accuracy, val_accuracy, lr, metrics_csv_path)
+
+            # 6. Log final metrics to the single summary CSV (for comparison)
+            save_metrics_csv(
+                num_epochs, 
+                lr, 
+                final_train_loss, 
+                final_val_loss, 
+                final_train_accuracy, 
+                final_val_accuracy, 
+                SUMMARY_CSV_PATH
+            )
+            
+            # 7. Save the unique model file
             torch.save(model.state_dict(), model_path)
             print(f"Model saved to {model_path}")
             
     print("\nHyperparameter sweep complete!")
+    print(f"All final results are summarized in: {SUMMARY_CSV_PATH}")
