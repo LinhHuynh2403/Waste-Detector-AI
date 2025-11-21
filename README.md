@@ -83,12 +83,20 @@ venv\Scripts\Activate
 pip install -r requirements.txt
 ```
 
-4. **Run the training or test script**
+4. **Run the training**
 ```bash
-python src/train.py     # for training
-python src/test.py   # for testing new images
+python src/train.py    
 ```
+
 5. **Run the plot**
 ```bash
 python src/plot_metric.py --file results/metrics_e20_lr000100.json # for instance
+```
+
+6. **Run the test**
+```bash
+# Replace '4' with the ID of your best-performing run!
+python src/test.py \
+    --run_id 4 \
+    --image plastic/plastic100.jpg glass/glass50.jpg  # you can have many images you want to test
 ```
