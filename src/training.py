@@ -123,10 +123,12 @@ def save_metrics_json(train_loss, val_loss, train_accuracy, val_accuracy, num_ep
     print(f"Training metrics saved to {filepath}")
 
 # Function to save metrics as CSV 
-def save_metrics_csv(num_epochs, lr, final_train_loss, final_val_loss, final_train_accuracy, final_val_accuracy, filepath):
+def save_metrics_csv(run_id, num_epochs, lr, final_train_loss, final_val_loss, final_train_accuracy, final_val_accuracy, filepath):
     
-    header = ['Epoch', 'Learning_Rate', 'Train_Loss', 'Val_Loss', 'Train_Accuracy', 'Val_Accuracy']
+    # Header Order: ['Run_ID', 'Epoch', 'Learning_Rate', 'Train_Loss', 'Val_Loss', 'Train_Accuracy', 'Val_Accuracy']
+    header = ['Run_ID', 'Epoch', 'Learning_Rate', 'Train_Loss', 'Val_Loss', 'Train_Accuracy', 'Val_Accuracy']
     data_row = [
+        run_id, # Correctly uses run_id from function argument
         num_epochs,
         lr,
         f"{final_train_loss:.4f}",
