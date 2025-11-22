@@ -122,13 +122,13 @@ def save_metrics_json(train_loss, val_loss, train_accuracy, val_accuracy, num_ep
         json.dump(metrics, f)
     print(f"Training metrics saved to {filepath}")
 
-# Function to save metrics as CSV 
+# Function to save metrics as CSV (FIXED: Added run_id argument)
 def save_metrics_csv(run_id, num_epochs, lr, final_train_loss, final_val_loss, final_train_accuracy, final_val_accuracy, filepath):
     
     # Header Order: ['Run_ID', 'Epoch', 'Learning_Rate', 'Train_Loss', 'Val_Loss', 'Train_Accuracy', 'Val_Accuracy']
     header = ['Run_ID', 'Epoch', 'Learning_Rate', 'Train_Loss', 'Val_Loss', 'Train_Accuracy', 'Val_Accuracy']
     data_row = [
-        run_id, # Correctly uses run_id from function argument
+        run_id, # Uses run_id from function argument
         num_epochs,
         lr,
         f"{final_train_loss:.4f}",
@@ -161,6 +161,9 @@ def save_class_names(classes, filepath):
 if __name__ == "__main__":
     RESULTS_FOLDER = 'results'
     SUMMARY_CSV_PATH = os.path.join(RESULTS_FOLDER, 'training_metrics.csv')
+    
+    # Ensure results folder exists
+    os.makedirs(RESULTS_FOLDER, exist_ok=True)
     
     # Clear the summary file at the start of a fresh sweep
     if os.path.exists(SUMMARY_CSV_PATH):
@@ -216,8 +219,9 @@ if __name__ == "__main__":
             # 5. Save per-epoch JSON (for plotting)
             save_metrics_json(train_loss, val_loss, train_accuracy, val_accuracy, num_epochs, lr, metrics_json_path)
 
-            # 6. Log final metrics to the single summary CSV (for comparison)
+            # 6. Log final metrics to the single summary CSV (FIXED: Added run_id)
             save_metrics_csv(
+                run_id, # PASSING run_id
                 num_epochs, 
                 lr, 
                 final_train_loss, 
